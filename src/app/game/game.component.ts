@@ -25,18 +25,26 @@ export class GameComponent {
   }
 
   takeCard() {
-    // this.currentCard = this.game.stack.pop(); => hier kommt Fehlermeldung vermutlich wegen neuerer Angular-Version
+    if (!this.pickCardAnimation) {
+      // this.currentCard = this.game.stack.pop(); => hier kommt Fehlermeldung vermutlich wegen neuerer Angular-Version
 
-    // Alternative vom Modul 13 - TypeScript Grundkurs, 09 - Tipps und Tricks (pop() Funktion, if() Abfrage nutzen)
-    let card = this.game.stack.pop();
+      // Alternative vom Modul 13 - TypeScript Grundkurs, 09 - Tipps und Tricks (pop() Funktion, if() Abfrage nutzen)
+      let card = this.game.stack.pop();
 
-    if (card != undefined) {
-      this.currentCard = card;
-    } else {
-      card
+      if (card != undefined) {
+        this.currentCard = card;
+      } else {
+        card
+      }
+
+      this.pickCardAnimation = true;
+      console.log('New card: ' + this.currentCard);
+      console.log('Game is', this.game);
+
+      setTimeout(() => {
+        this.game.playedCard.push(this.currentCard);
+        this.pickCardAnimation = false;
+      }, 1000);
     }
-
-    console.log(this.currentCard);
-    this.pickCardAnimation = true;
   }
 }
