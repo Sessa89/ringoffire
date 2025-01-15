@@ -7,13 +7,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { GameInfoComponent } from '../game-info/game-info.component';
-import { Firestore, collection, collectionData, addDoc, CollectionReference, Unsubscribe, DocumentReference } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, addDoc, CollectionReference, Unsubscribe, doc, getDoc } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, PlayerComponent, MatButtonModule, MatIconModule, GameInfoComponent],
+  imports: [CommonModule, PlayerComponent, MatButtonModule, MatIconModule, GameInfoComponent, MatProgressSpinnerModule],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
 })
@@ -23,19 +25,25 @@ export class GameComponent {
 
   pickCardAnimation = false;
   currentCard: string = '';
-  game!: Game;    // "!" hier noch notwendig, da Variable noch nicht initalisiert wurde
+  game: Game | undefined;    // "!" hier noch notwendig, da Variable noch nicht initalisiert wurde
   gameSubscription: Subscription | undefined;
 
-  constructor(public dialog: MatDialog) {
-    const gamesCollection = this.getGamesRef();
-    const games$ = collectionData(gamesCollection) as Observable<Game[]>;
-    this.gameSubscription = games$.subscribe((games) => {
-      console.log('Firestore-Daten:', games);
-    });
+  constructor(private route: ActivatedRoute, public dialog: MatDialog) {
+    // const gamesCollection = this.getGamesRef();
+    // const games$ = collectionData(gamesCollection) as Observable<Game[]>;
+    // this.gameSubscription = games$.subscribe((games) => {
+    //   console.log('Firestore-Daten:', games);
+    // });
 
-    this.newGame();
-    console.log(this.game);
-    
+    // this.newGame();
+    //console.log(this.game);
+  }
+
+  ngOnInit() {
+    this.route.params.subscribe((params) => {
+      console.log('Params:', params['id']);
+      this.loadGame(params['id']);
+    });
   }
 
   ngOnDestroy() {
@@ -48,18 +56,42 @@ export class GameComponent {
     return collection(this.firestore, 'games');
   }
 
-  addToGameCollection() {
-    addDoc(this.getGamesRef(), this.game.toJson()).then((documentReference) => {
-      console.log(documentReference);
+  private async loadGame(id: string) {
+    const docRef = doc(this.firestore, 'games', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      this.game = Game.fromJSON(docSnap.data());
+      console.log('loaded game:', this.game);
+    }
+  }
+
+  // private addToGameCollection() {
+  //   addDoc(this.getGamesRef(), this.game.toJson()).then((documentReference) => {
+  //     console.log(documentReference);
+  //   });
+  // }
+
+  // private newGame() {
+  //   this.game = new Game();
+  //   this.addToGameCollection();
+  // }
+
+  openDialog(): void {
+    const dialogRef = this.dialog.open(DialogAddPlayerComponent);
+
+    dialogRef.afterClosed().subscribe((name: string) => {
+      if (name !== undefined && this.game) {
+        this.game.players.push(name);
+      }
     });
   }
 
-  newGame() {
-    this.game = new Game();
-    this.addToGameCollection();
-  }
-
   takeCard() {
+    if (!this.game) {
+      return;
+    }
+
     if (!this.pickCardAnimation) {
       // this.currentCard = this.game.stack.pop(); => hier kommt Fehlermeldung vermutlich wegen neuerer Angular-Version
 
@@ -80,19 +112,13 @@ export class GameComponent {
       this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
 
       setTimeout(() => {
-        this.game.playedCard.push(this.currentCard);
-        this.pickCardAnimation = false;
+        if (this.game) {
+          this.game.playedCard.push(this.currentCard);
+          this.pickCardAnimation = false;
+        }
       }, 1000);
     }
   }
 
-  openDialog(): void {
-    const dialogRef = this.dialog.open(DialogAddPlayerComponent);
 
-    dialogRef.afterClosed().subscribe((name: string) => {
-      if (name && name.length > 0) {
-        this.game.players.push(name);
-      }
-    });
-  }
 }

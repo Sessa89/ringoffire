@@ -1,3 +1,5 @@
+import { DocumentData } from "@angular/fire/firestore";
+
 export class Game {
     public players: string[] = [];
     public stack: string[] = [];
@@ -22,6 +24,15 @@ export class Game {
             playedCard: this.playedCard,
             currentPlayer: this.currentPlayer
         };
+    }
+
+    public static fromJSON(data: DocumentData) {
+        const game = new Game();
+        game.currentPlayer = data["currentPlayer"];
+        game.playedCard = data["playedCard"];
+        game.players = data["players"];
+        game.stack = data["stack"];
+        return game
     }
 }
 
