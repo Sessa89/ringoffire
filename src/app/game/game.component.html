@@ -29,5 +29,9 @@
 </button>
 }
 @else {
-<mat-spinner></mat-spinner>
+    @if(error) {
+        <div>GameID does not exist</div>
+    } @else {
+        <mat-spinner></mat-spinner>
+    }
 }

@@ -27,6 +27,8 @@ export class GameComponent {
   currentCard: string = '';
   game: Game | undefined;    // "!" hier noch notwendig, da Variable noch nicht initalisiert wurde
   gameSubscription: Subscription | undefined;
+  error = false;
+  
 
   constructor(private route: ActivatedRoute, public dialog: MatDialog) {
     // const gamesCollection = this.getGamesRef();
@@ -52,9 +54,9 @@ export class GameComponent {
     }
   }
 
-  private getGamesRef() {
-    return collection(this.firestore, 'games');
-  }
+  // private getGamesRef() {
+  //   return collection(this.firestore, 'games');
+  // }
 
   private async loadGame(id: string) {
     const docRef = doc(this.firestore, 'games', id);
@@ -63,6 +65,8 @@ export class GameComponent {
     if (docSnap.exists()) {
       this.game = Game.fromJSON(docSnap.data());
       console.log('loaded game:', this.game);
+    } else {
+      this.error = true;
     }
   }
 
