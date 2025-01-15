@@ -7,15 +7,23 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { GameInfoComponent } from '../game-info/game-info.component';
-import { Firestore, collection, collectionData, addDoc, CollectionReference, Unsubscribe, doc, getDoc } from '@angular/fire/firestore';
-import { Observable, Subscription } from 'rxjs';
+import { Firestore, doc, getDoc, updateDoc } from '@angular/fire/firestore';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ThisReceiver } from '@angular/compiler';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, PlayerComponent, MatButtonModule, MatIconModule, GameInfoComponent, MatProgressSpinnerModule],
+  imports: [
+    CommonModule,
+    PlayerComponent,
+    MatButtonModule,
+    MatIconModule,
+    GameInfoComponent,
+    MatProgressSpinnerModule
+  ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
 })
@@ -24,11 +32,11 @@ export class GameComponent {
   // games$: Observable<Game[]>
 
   pickCardAnimation = false;
-  currentCard: string = '';
   game: Game | undefined;    // "!" hier noch notwendig, da Variable noch nicht initalisiert wurde
+  currentCard: string = '';
   gameSubscription: Subscription | undefined;
   error = false;
-  
+  id = '';
 
   constructor(private route: ActivatedRoute, public dialog: MatDialog) {
     // const gamesCollection = this.getGamesRef();
@@ -43,8 +51,8 @@ export class GameComponent {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      console.log('Params:', params['id']);
       this.loadGame(params['id']);
+      this.id = params['id'];
     });
   }
 
@@ -91,38 +99,40 @@ export class GameComponent {
     });
   }
 
-  takeCard() {
-    if (!this.game) {
-      return;
-    }
-
-    if (!this.pickCardAnimation) {
-      // this.currentCard = this.game.stack.pop(); => hier kommt Fehlermeldung vermutlich wegen neuerer Angular-Version
-
-      // Alternative vom Modul 13 - TypeScript Grundkurs, 09 - Tipps und Tricks (pop() Funktion, if() Abfrage nutzen)
-      let card = this.game.stack.pop();
-
-      if (card != undefined) {
-        this.currentCard = card;
-      } else {
-        card
-      }
-
-      this.pickCardAnimation = true;
-      console.log('New card: ' + this.currentCard);
-      console.log('Game is', this.game);
-
-      this.game.currentPlayer++;
-      this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
-
-      setTimeout(() => {
-        if (this.game) {
-          this.game.playedCard.push(this.currentCard);
-          this.pickCardAnimation = false;
-        }
-      }, 1000);
+  saveGame() {
+    if (this.game) {
+      const docRef = doc(this.firestore, 'games', this.id);
+      updateDoc(docRef, this.game.toJson());
     }
   }
 
+  takeCard() {
+    if (!this.game || this.pickCardAnimation) {
+      return;
+    }
 
+    // this.currentCard = this.game.stack.pop(); => hier kommt Fehlermeldung vermutlich wegen neuerer Angular-Version
+
+    // Alternative vom Modul 13 - TypeScript Grundkurs, 09 - Tipps und Tricks (pop() Funktion, if() Abfrage nutzen)
+    let card = this.game.stack.pop();
+    
+    if (card != undefined) {
+      this.currentCard = card;
+      this.pickCardAnimation = true;
+    }
+
+    console.log('New card: ' + this.currentCard);
+    console.log('Game is', this.game);
+
+    this.game.currentPlayer++;
+    this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
+
+    setTimeout(() => {
+      if (this.game) {
+        this.game.playedCard.push(this.currentCard);
+        this.pickCardAnimation = false;
+        this.saveGame();
+      }
+    }, 1000);
+ }
 }
