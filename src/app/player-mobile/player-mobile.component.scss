@@ -1,0 +1,27 @@
+@import '../../styles.scss';
+
+.player {
+    width: 80px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    border-bottom-left-radius: 50px;
+    border-bottom-right-radius: 50px;
+    background-color: rgb(50, 50, 50, 0.8);
+
+    span {
+        font-size: 14px;
+    }  
+
+    img {
+        margin-top: 16px;
+        width: 35px;
+        height: 35px;
+        object-fit: cover;
+        border-radius: 100%;
+    }
+}
+
+.player-active {
+    background-color: orange !important;
+}

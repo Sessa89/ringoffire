@@ -2,7 +2,14 @@
     <app-player
         [ngStyle]="{ 'top.px': 100 + $index * 80 }"
         [name]="player"
-        class="player-position"
+        class="player-position hide-mobile"
+        [playerActive]="$index == game.currentPlayer"
+    />
+
+    <app-player-mobile
+        [ngStyle]="{ 'left.px': 10 + $index * 100, 'top.px': 0 }"
+        [name]="player"
+        class="player-position hide-desktop"
         [playerActive]="$index == game.currentPlayer"
     />
 }
@@ -38,7 +45,7 @@
     </div>
 </div>
 
-<app-game-info [card]="game.currentCard" />
+<app-game-info [card]="game.currentCard" class="pin-bottom"/>
 
 <button mat-fab color="primary" (click)="openDialog()" class="btn-add">
     <mat-icon>add</mat-icon>
